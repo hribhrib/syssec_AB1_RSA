@@ -15,7 +15,9 @@ public class RSAImpl implements RSA {
 		// TODO Auto-generated method stub
 		BigInteger p, q;
 		Random rnd = new Random();
-
+		
+		
+		
 		/*
 		 * do { p = random_prime(keysize / 2); q = random_prime(keysize / 2); lambda =
 		 * bigInt.lcm(p.minus(1), q.minus(1)); } while (bigInt.gcd(e,
