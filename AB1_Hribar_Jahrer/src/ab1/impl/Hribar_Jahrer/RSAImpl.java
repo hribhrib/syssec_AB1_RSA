@@ -1,6 +1,8 @@
 package ab1.impl.Hribar_Jahrer;
 
+
 import java.math.BigInteger;
+import java.util.Arrays;
 import java.util.Random;
 
 import ab1.RSA;
@@ -12,7 +14,6 @@ public class RSAImpl implements RSA {
 
 	@Override
 	public void init(int n) {
-		// TODO Auto-generated method stub
 		BigInteger p, q;
 		Random rnd = new Random();
 		
@@ -31,49 +32,40 @@ public class RSAImpl implements RSA {
 		// phi(n)
 		BigInteger phi;// = new BigInteger((p.subtract(BigInteger.ONE).
 		// multiply(q.subtract(BigInteger.ONE))).toString());
-
+		
 		do {
 			p = new BigInteger(n / 2, 8, rnd);
 			q = new BigInteger(n / 2, 8, rnd);
 			// phi = LCM(q.subtract(BigInteger.ONE), p.subtract(BigInteger.ONE));
-			phi = new BigInteger(p.subtract(BigInteger.ONE).multiply(q.subtract(BigInteger.ONE)).toString());
+			BigInteger pmo = p.subtract(BigInteger.ONE); 
+			BigInteger qmo = q.subtract(BigInteger.ONE); 
+			phi = pmo.multiply(qmo);
+			
+			//phi = new BigInteger(p.subtract(BigInteger.ONE).multiply(q.subtract(BigInteger.ONE)).toString());
 		} while (!e.gcd(phi).equals(BigInteger.ONE)
-				|| p.subtract(q).abs().shiftRight(n / 2 - 100).equals(BigInteger.ZERO));
+				|| p.equals(q) || p.multiply(q).bitLength() != p.bitLength()+p.bitLength());
 
+		System.out.println("p length: " + p.bitLength());
+		System.out.println("q length: " + q.bitLength());
+		
+		//p.subtract(q).abs().shiftRight(n / 2 - 100).equals(BigInteger.ZERO)
+		
 		BigInteger d = e.modInverse(phi);
 
 		this.n = p.multiply(q);
+		
+		System.out.println("n length: " + this.n.bitLength());
 
-		System.out.println("d: " + d.intValue());
-		System.out.println("e: " + e.intValue());
-		System.out.println("q: " + q.intValue());
-		System.out.println("p: " + p.intValue());
 
-		System.out.println("n: " + this.n.intValue());
+		
+		System.out.println("d: " + d.toString());
+		System.out.println("e: " + e.toString());
+		System.out.println("q: " + q.toString());
+		System.out.println("p: " + p.toString());
 
-		/*
-		 * p = new BigInteger(n / 2, 8, rnd);
-		 * 
-		 * 
-		 * 
-		 * rnd.nextInt();
-		 * 
-		 * do { q = new BigInteger(n / 2, 8, rnd); } while (p == q);
-		 * 
-		 * 
-		 * 
-		 * this.n = p.multiply(q);
-		 * 
-		 * 
-		 * 
-		 * 
-		 * 
-		 * 
-		 * 
-		 * 
-		 * 
-		 * BigInteger d = e.modInverse(phi);
-		 */
+		System.out.println("n: " + this.n.toString());
+
+		
 		pubk = new PublicKey(this.n, e);
 		prvk = new PrivateKey(this.n, d);
 
@@ -96,27 +88,32 @@ public class RSAImpl implements RSA {
 
 	@Override
 	public byte[] encrypt(byte[] data, boolean activateOAEP) {
+		System.out.println("data length: " + data.length);
+		System.out.println("data" + Arrays.toString(data));
+		BigInteger cipher = new BigInteger(data);
+		System.out.println("Data in cipher: " + cipher.toString());
+		cipher = cipher.modPow(pubk.getE(), pubk.getN()); 
 
-		BigInteger tmp;
+		/*BigInteger tmp;
 		byte[] cipher = new byte[data.length];
 
 		for (int i = 0; i < data.length; i++) {
 			System.out.println("data: " + data[i]);
-			System.out.println("e: " + pubk.getE().intValue());
-			System.out.println("n: " + pubk.getN().intValue());
+			System.out.println("e: " + pubk.getE().toString());
+			System.out.println("n: " + pubk.getN().toString());
 			tmp = new BigInteger(Byte.toString(data[i]));
 			tmp = tmp.modPow(pubk.getE(), pubk.getN());
 			cipher[i] = tmp.byteValue();
 			System.out.println("cipher: " + cipher[i]);
-		}
-
-		return cipher;
+		}*/
+		System.out.println("cypher length: " + cipher.toByteArray().length);
+		System.out.println("cypher:" + Arrays.toString(cipher.toByteArray()));
+		return cipher.toByteArray();
 	}
 
 	@Override
 	public byte[] decrypt(byte[] data) {
-		// TODO Auto-generated method stub
-		BigInteger tmp;
+		/*BigInteger tmp;
 		byte[] cipher = new byte[data.length];
 
 		for (int i = 0; i < data.length; i++) {
@@ -126,7 +123,15 @@ public class RSAImpl implements RSA {
 			cipher[i] = tmp.byteValue();
 			System.out.println("cipher: " + cipher[i]);
 		}
-		return null;
+		return cipher;*/
+		System.out.println();
+		System.out.println("dec cipher leng "+data.length);
+		System.out.println("decrypt data "+ Arrays.toString(data));
+		BigInteger msg = new BigInteger(data); 
+		
+		msg = msg.modPow(prvk.getD(), prvk.getN()); 
+		System.out.println("decrypt msg: " + Arrays.toString(msg.toByteArray()));
+		return msg.toByteArray();
 	}
 
 	@Override
