@@ -46,13 +46,13 @@ public class RSATest {
 		int dataLength = 4;
 		byte[] data = new byte[dataLength];
 
-		/*for (int i = 0; i < TESTCOUNT_SHORT; i++) {
-*/			r.nextBytes(data);
+		for (int i = 0; i < TESTCOUNT_SHORT; i++) {
+			r.nextBytes(data);
 
 			testRSANoOAEP(data, r);
-	//	}
+		}
 	}
-/*
+
 	// 2 Pts
 	@Test
 	public void testEncryptionLong() {
@@ -68,9 +68,9 @@ public class RSATest {
 			testRSANoOAEP(data, r);
 		}
 	}
-*/
+
 	private void testRSANoOAEP(byte[] data, Random r) {
-		/*byte[] cipher1 = rsa.encrypt(data, false);
+		byte[] cipher1 = rsa.encrypt(data, false);
 		byte[] cipher2 = rsa.encrypt(data, false);
 
 		assertArrayEquals(cipher1, cipher2);
@@ -80,15 +80,15 @@ public class RSATest {
 		byte[] cipherDiff = rsa.encrypt(dataChanged, false);
 
 		assertEquals(false, Arrays.equals(cipher1, cipherDiff));
-*/
-		//if (r.nextBoolean()) {
+
+		if (r.nextBoolean()) {
 			// Keine Änderung des Schlüsseltexts
 			byte[] cipher = rsa.encrypt(data, false);
 
 			byte[] message_decrypted = rsa.decrypt(cipher);
 
 			assertArrayEquals(data, message_decrypted);
-		 /*else {
+		} else {
 			byte[] cipher = rsa.encrypt(data, false);
 
 			// Baue Fehler ab der Hälfte der Daten ein (davor stehen eventuell
@@ -99,7 +99,7 @@ public class RSATest {
 			byte[] message_decrypted = rsa.decrypt(cipher);
 
 			assertEquals(false, Arrays.equals(data, message_decrypted));
-		}*/
+		}
 	}
 /*
 	// 1 Pts

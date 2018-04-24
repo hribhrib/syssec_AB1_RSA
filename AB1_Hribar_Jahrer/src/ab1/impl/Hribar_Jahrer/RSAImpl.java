@@ -1,6 +1,6 @@
 package ab1.impl.Hribar_Jahrer;
 
-
+import java.io.ByteArrayInputStream;
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Random;
@@ -16,9 +16,7 @@ public class RSAImpl implements RSA {
 	public void init(int n) {
 		BigInteger p, q;
 		Random rnd = new Random();
-		
-		
-		
+
 		/*
 		 * do { p = random_prime(keysize / 2); q = random_prime(keysize / 2); lambda =
 		 * bigInt.lcm(p.minus(1), q.minus(1)); } while (bigInt.gcd(e,
@@ -30,108 +28,110 @@ public class RSAImpl implements RSA {
 		e = e.pow(16).add(BigInteger.ONE);
 
 		// phi(n)
-		BigInteger phi;// = new BigInteger((p.subtract(BigInteger.ONE).
-		// multiply(q.subtract(BigInteger.ONE))).toString());
-		
+		BigInteger phi;
+		p = new BigInteger(n / 2, 8, rnd);
 		do {
-			p = new BigInteger(n / 2, 8, rnd);
 			q = new BigInteger(n / 2, 8, rnd);
-			// phi = LCM(q.subtract(BigInteger.ONE), p.subtract(BigInteger.ONE));
-			BigInteger pmo = p.subtract(BigInteger.ONE); 
-			BigInteger qmo = q.subtract(BigInteger.ONE); 
+			BigInteger pmo = p.subtract(BigInteger.ONE);
+			BigInteger qmo = q.subtract(BigInteger.ONE);
 			phi = pmo.multiply(qmo);
-			
-			//phi = new BigInteger(p.subtract(BigInteger.ONE).multiply(q.subtract(BigInteger.ONE)).toString());
-		} while (!e.gcd(phi).equals(BigInteger.ONE)
-				|| p.equals(q) || p.multiply(q).bitLength() != p.bitLength()+p.bitLength());
+		} while (!e.gcd(phi).equals(BigInteger.ONE) || p.equals(q)
+				|| p.multiply(q).bitLength() != p.bitLength() + p.bitLength());
 
-		System.out.println("p length: " + p.bitLength());
-		System.out.println("q length: " + q.bitLength());
-		
-		//p.subtract(q).abs().shiftRight(n / 2 - 100).equals(BigInteger.ZERO)
-		
 		BigInteger d = e.modInverse(phi);
 
 		this.n = p.multiply(q);
-		
-		System.out.println("n length: " + this.n.bitLength());
 
-
-		
-		System.out.println("d: " + d.toString());
-		System.out.println("e: " + e.toString());
-		System.out.println("q: " + q.toString());
-		System.out.println("p: " + p.toString());
-
-		System.out.println("n: " + this.n.toString());
-
-		
 		pubk = new PublicKey(this.n, e);
 		prvk = new PrivateKey(this.n, d);
 
 	}
 
-	private BigInteger LCM(BigInteger a, BigInteger b) {
-		BigInteger c = a.gcd(b);
-		return a.multiply(b.divide(c));
-	}
-
-	@Override
 	public PublicKey getPublicKey() {
 		return pubk;
 	}
 
-	@Override
 	public PrivateKey getPrivateKey() {
 		return prvk;
 	}
 
-	@Override
 	public byte[] encrypt(byte[] data, boolean activateOAEP) {
-		System.out.println("data length: " + data.length);
-		System.out.println("data" + Arrays.toString(data));
-		BigInteger cipher = new BigInteger(data);
-		System.out.println("Data in cipher: " + cipher.toString());
+		
+		
+		byte[] input = new byte[data.length+1];
+		input[0] = 01; 
+		for(int i = 0; i < data.length; i++) {
+			input[i+1] = data[i];
+		}
+		
+		BigInteger cipher = new BigInteger(input);
+		
+		
+		//Message is longer than n//////////////////////////
+		if (cipher.compareTo(prvk.getN()) >= 0) {
+			String output = "";
+			BigInteger queueBlock = cipher; 
+			while (queueBlock.compareTo(pubk.getN()) >= 0) {
+				cipher = queueBlock.shiftRight(8);
+				System.out.println(cipher.toString());
+				queueBlock = queueBlock.shiftRight(1024);
+				output += cipher.modPow(pubk.getE(), pubk.getN()); 
+				System.out.println("round");
+			}
+			cipher = queueBlock; 
+			output += cipher.modPow(pubk.getE(), pubk.getN()); 
+			System.out.println(output);
+			return output.getBytes(); 
+		}
+		////////////////////////////////////////////////////
+		
+		System.out.println("cipher to: " + cipher.toString());
 		cipher = cipher.modPow(pubk.getE(), pubk.getN()); 
-
-		/*BigInteger tmp;
-		byte[] cipher = new byte[data.length];
-
-		for (int i = 0; i < data.length; i++) {
-			System.out.println("data: " + data[i]);
-			System.out.println("e: " + pubk.getE().toString());
-			System.out.println("n: " + pubk.getN().toString());
-			tmp = new BigInteger(Byte.toString(data[i]));
-			tmp = tmp.modPow(pubk.getE(), pubk.getN());
-			cipher[i] = tmp.byteValue();
-			System.out.println("cipher: " + cipher[i]);
-		}*/
-		System.out.println("cypher length: " + cipher.toByteArray().length);
-		System.out.println("cypher:" + Arrays.toString(cipher.toByteArray()));
 		return cipher.toByteArray();
+	
 	}
 
-	@Override
 	public byte[] decrypt(byte[] data) {
-		/*BigInteger tmp;
-		byte[] cipher = new byte[data.length];
 
-		for (int i = 0; i < data.length; i++) {
-			System.out.println("data" + data[i]);
-			tmp = new BigInteger(Byte.toString(data[i]));
-			tmp = tmp.modPow(prvk.getD(), prvk.getN());
-			cipher[i] = tmp.byteValue();
-			System.out.println("cipher: " + cipher[i]);
-		}
-		return cipher;*/
 		System.out.println();
-		System.out.println("dec cipher leng "+data.length);
-		System.out.println("decrypt data "+ Arrays.toString(data));
-		BigInteger msg = new BigInteger(data); 
+		BigInteger msg = new BigInteger(data);
 		
-		msg = msg.modPow(prvk.getD(), prvk.getN()); 
-		System.out.println("decrypt msg: " + Arrays.toString(msg.toByteArray()));
-		return msg.toByteArray();
+		
+		/*
+		//Message is longer than n//////////////////////////
+		if (msg.compareTo(prvk.getN()) >= 0) {
+			String output = "";
+			BigInteger queueBlock = msg; 
+			while (queueBlock.compareTo(prvk.getN()) >= 0) {
+				msg = queueBlock.shiftLeft(8);
+				System.out.println(msg.toString());
+				queueBlock = queueBlock.shiftLeft(1024);
+				output += msg.modPow(prvk.getD(), prvk.getN()); 
+				System.out.println("round");
+			}
+			msg = queueBlock; 
+			output += msg.modPow(prvk.getD(), prvk.getN()); 
+			System.out.println(output);
+			byte[] temp = output.getBytes();
+			byte[] ret = new byte[temp.length - 1];
+			for (int i = 0; i < ret.length; i++) {
+				ret[i] = temp[i + 1];
+			}
+			System.out.println("decrypted: " + Arrays.toString(ret));
+			return ret;
+		}
+		////////////////////////////////////////////////////
+				*/
+		msg = msg.modPow(prvk.getD(), prvk.getN());
+		System.out.println("decrypt msg: " + msg.toString());
+
+		byte[] temp = msg.toByteArray();
+		byte[] ret = new byte[temp.length - 1];
+		for (int i = 0; i < ret.length; i++) {
+			ret[i] = temp[i + 1];
+		}
+		System.out.println("decrypted: " + Arrays.toString(ret));
+		return ret;
 	}
 
 	@Override
