@@ -46,11 +46,11 @@ public class RSATest {
 		int dataLength = 4;
 		byte[] data = new byte[dataLength];
 
-		for (int i = 0; i < TESTCOUNT_SHORT; i++) {
+	//	for (int i = 0; i < TESTCOUNT_SHORT; i++) {
 			r.nextBytes(data);
 
 			testRSANoOAEP(data, r);
-		}
+		//}
 	}
 /*
 	// 2 Pts
