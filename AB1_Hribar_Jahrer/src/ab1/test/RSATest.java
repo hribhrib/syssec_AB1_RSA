@@ -101,7 +101,7 @@ public class RSATest {
 			assertEquals(false, Arrays.equals(data, message_decrypted));
 		}
 	}
-/*
+
 	// 1 Pts
 	@Test
 	public void testEncryptionShort_OAEP() {
@@ -130,7 +130,7 @@ public class RSATest {
 			testRSAOAEP(data, r);
 		}
 	}
-*/
+
 	private void testRSAOAEP(byte[] data, Random r) {
 		// Chiffrate müssen unterschiedlich sein
 		byte[] cipher1 = rsa.encrypt(data, true);
@@ -162,7 +162,7 @@ public class RSATest {
 			assertEquals(false, Arrays.equals(data, message_decrypted));
 		}
 	}
-/*
+
 	// 3 Pts
 	@Test
 	public void testSignature() {
@@ -196,5 +196,5 @@ public class RSATest {
 				assertEquals(false, rsa.verify(data, sign));
 			}
 		}
-	}*/
+	}
 }
