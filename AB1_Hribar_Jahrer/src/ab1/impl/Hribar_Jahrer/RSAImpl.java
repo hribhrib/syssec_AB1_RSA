@@ -149,13 +149,13 @@ public class RSAImpl implements RSA {
 			outputBuffer.add(cipher.toByteArray());
 		}
 		
+		
 		byte[] messageText = new byte[outputBuffer.size()*128];  
 		System.out.println("DEC output.length: " + messageText.length);
 		System.out.println("DEC buffer length: " + outputBuffer.size());
 		for (int i = 0; !outputBuffer.isEmpty(); i++) {
 			System.out.println("int i: " + i);
 			byte[] temp = outputBuffer.poll(); 
-			
 			
 			System.out.println("DEC temp: " + Arrays.toString(temp));
 			System.out.println("DEC Temp length: " + temp.length);
