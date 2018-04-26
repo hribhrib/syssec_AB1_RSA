@@ -53,71 +53,79 @@ public class RSAImpl implements RSA {
 	}
 
 	public byte[] encrypt(byte[] data, boolean activateOAEP) {
-		Queue<Byte> buffer = new LinkedList<>();
-		Queue<byte[]> outputBuffer = new LinkedList<byte[]>();
-		
-		System.out.println();
-		System.out.println("Input: " + Arrays.toString(data));
-		System.out.println("pubk N bit: " + pubk.getN().bitLength());
-		
-		//to fix the problem with leading negative numbers
-		buffer.add((byte)01); 
-		//Put hole data in queue
-		for(byte i : data) {
-			buffer.add(i);
-		}
-		//Padding
-		buffer.add((byte) 10); 
-		
-		
-		while(!buffer.isEmpty()) {
-			//get first 127 byte from queue
-			byte[] block = new byte[127]; 
-			for(int i = 0; i < block.length && !buffer.isEmpty(); i++) {
-				block[i] = buffer.poll(); 
-				System.out.println("Block: " + Arrays.toString(block));
+		if(activateOAEP) {
+			Queue<Byte> buffer = new LinkedList<>();
+			Queue<byte[]> outputBuffer = new LinkedList<byte[]>();
+			
+			System.out.println("--------------Entered encypt------------------");
+			System.out.println("Input: " + Arrays.toString(data));
+			System.out.println("pubk N bit: " + pubk.getN().bitLength());
+			
+			//to fix the problem with leading negative numbers
+			buffer.add((byte)01); 
+			//Put hole data in queue
+			for(byte i : data) {
+				buffer.add(i);
 			}
-			//But 127byte block in BigInteger and calc cipher text
-			BigInteger cipher = new BigInteger(block); 
+			//Padding
+			buffer.add((byte) 10); 
+			
+			
+			while(!buffer.isEmpty()) {
+				//get first 127 byte from queue
+				byte[] block = new byte[127]; 
+				for(int i = 0; i < block.length && !buffer.isEmpty(); i++) {
+					block[i] = buffer.poll(); 
+					System.out.println("Block: " + Arrays.toString(block));
+				}
+				//But 127byte block in BigInteger and calc cipher text
+				BigInteger cipher = new BigInteger(block); 
+				cipher = cipher.modPow(pubk.getE(), pubk.getN());
+				System.out.println("Cipher: " + cipher.toString().length() + " " + cipher.toByteArray().length+ " " + cipher.bitLength() + " " + cipher.toString());
+				//Store the output
+				outputBuffer.add(cipher.toByteArray());
+			}
+			
+			byte[] cipherText = new byte[outputBuffer.size()*128];  
+			
+			System.out.println("buffer length: " + outputBuffer.size());
+			for (int i = 0; !outputBuffer.isEmpty(); i++) {
+				byte[] temp = outputBuffer.poll(); 
+				
+				//remove leading zero from 2 compliment representation
+				if (temp[0] == 0) {
+					System.out.println("REMOVE ZERO");
+					temp = Arrays.copyOfRange(temp, 1, temp.length);
+				}
+				
+				System.out.println("temp: " + Arrays.toString(temp));
+				System.out.println("temp length: " + temp.length);
+				System.arraycopy(temp, 0, cipherText, i*128, temp.length);
+			}
+			
+			
+			if (cipherText[0] == 0) {
+			    byte[] tmp = new byte[cipherText.length - 1];
+			    System.arraycopy(cipherText, 1, tmp, 0, tmp.length);
+			    cipherText = tmp;
+			}
+			
+			return cipherText; 
+		}else {
+			BigInteger cipher = new BigInteger(data); 
 			cipher = cipher.modPow(pubk.getE(), pubk.getN());
-			System.out.println("Cipher: " + cipher.toString().length() + " " + cipher.toByteArray().length+ " " + cipher.bitLength() + " " + cipher.toString());
-			//Store the output
-			outputBuffer.add(cipher.toByteArray());
+			return cipher.toByteArray();
 		}
 		
-		byte[] cipherText = new byte[outputBuffer.size()*128];  
-		
-		System.out.println("buffer length: " + outputBuffer.size());
-		for (int i = 0; !outputBuffer.isEmpty(); i++) {
-			byte[] temp = outputBuffer.poll(); 
-			
-			//remove leading zero from 2 compliment representation
-			if (temp[0] == 0) {
-				System.out.println("REMOVE ZERO");
-				temp = Arrays.copyOfRange(temp, 1, temp.length);
-			}
-			
-			System.out.println("temp: " + Arrays.toString(temp));
-			System.out.println("temp length: " + temp.length);
-			System.arraycopy(temp, 0, cipherText, i*128, temp.length);
-		}
-		
-		
-		if (cipherText[0] == 0) {
-		    byte[] tmp = new byte[cipherText.length - 1];
-		    System.arraycopy(cipherText, 1, tmp, 0, tmp.length);
-		    cipherText = tmp;
-		}
-		
-		return cipherText; 
 	}
 
 	public byte[] decrypt(byte[] data) {
+	
 		
 		Queue<Byte> buffer = new LinkedList<>();
 		Queue<byte[]> outputBuffer = new LinkedList<byte[]>();
 		
-		System.out.println();
+		System.out.println("---------------Enter Decypt------------");
 		System.out.println("DEC Input: " + Arrays.toString(data));
 		
 		//Put hole data in queue
