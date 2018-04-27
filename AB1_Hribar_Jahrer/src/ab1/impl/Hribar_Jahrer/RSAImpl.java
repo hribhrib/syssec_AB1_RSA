@@ -136,7 +136,7 @@ public class RSAImpl implements RSA {
 				}
 				for (int i = 0; i < block.length && !buffer.isEmpty(); i++) {
 					block[i] = buffer.poll();
-					//System.out.println("Block: " + Arrays.toString(block));
+					// System.out.println("Block: " + Arrays.toString(block));
 				}
 				// put 127byte block in BigInteger and calc cipher text
 				BigInteger cipher = new BigInteger(block);
@@ -175,10 +175,10 @@ public class RSAImpl implements RSA {
 			}
 			// Padding
 			buffer.add((byte) 10);
-			
+
 			Random r = new Random();
-			
-			if(buffer.size() % 127 != 0) {
+
+			if (buffer.size() % 127 != 0) {
 				for (int i = 127 - (buffer.size() % 127); i > 0; i--) {
 					buffer.add((byte) r.nextInt(10));
 				}
@@ -216,7 +216,7 @@ public class RSAImpl implements RSA {
 				System.out.println("temp length: " + temp.length);
 				System.arraycopy(temp, 0, cipherText, i * 128, temp.length);
 			}
-			
+
 			return cipherText;
 
 			/*
@@ -282,7 +282,7 @@ public class RSAImpl implements RSA {
 				return clearMessage;
 
 			}
-		} else if (data.length >128){
+		} else if (data.length > 128) {
 			// Put hole data in queue
 			for (int i = 1; i < data.length; i++) {
 				buffer.add(data[i]);
@@ -291,8 +291,7 @@ public class RSAImpl implements RSA {
 			// decrypt data
 			while (!buffer.isEmpty()) {
 				// get first 128 byte from queue
-				byte[] block = new byte[128];					
-				
+				byte[] block = new byte[128];
 
 				for (int i = 0; i < block.length && !buffer.isEmpty(); i++) {
 					block[i] = buffer.poll();
@@ -301,8 +300,8 @@ public class RSAImpl implements RSA {
 				// But 128 byte block in BigInteger
 				BigInteger cipher = new BigInteger(block);
 				cipher = cipher.modPow(prvk.getD(), prvk.getN());
-				// Store the output
-				
+				// Store the outputmessageHashed
+
 				System.out.println("message parts " + Arrays.toString(cipher.toByteArray()));
 				outputBuffer.add(cipher.toByteArray());
 			}
@@ -321,23 +320,22 @@ public class RSAImpl implements RSA {
 
 			System.out.println("messageText: " + Arrays.toString(messageText));
 
-			 if (messageText[0] == 1) {
-			// path for no padding and >1 block
-			System.out.println("path for no padding and >1 block");
-			
-			//TODO
+			if (messageText[0] == 1) {
+				// path for no padding and >1 block
+				System.out.println("path for no padding and >1 block");
 
+				// TODO
+
+				return messageText;
+
+			} else if (messageText[0] == 2) {
+				// path for padding and >1 block
+				System.out.println("path for padding and >1 block");
+
+				// TODO
+
+			}
 			return messageText;
-
-			 } else if (messageText[0] == 2) {
-			 //path for padding and >1 block
-			 System.out.println("path for padding and >1 block");
-			 
-			 //TODO
-			 
-			 
-			 }
-			 return messageText;
 		}
 		return null;
 	}
@@ -357,40 +355,70 @@ public class RSAImpl implements RSA {
 	@Override
 	public byte[] sign(byte[] message) {
 		// TODO Auto-generated method stub
+		System.out.println("-------entered sign_-------");
 
 		System.out.println("message: " + Arrays.toString(message));
 
-		return decrypt(hash(message));
+		byte[] messageHashed;
+		messageHashed = hash(message);
+
+		System.out.println("messageHashed: " + Arrays.toString(messageHashed));
+
+		BigInteger bi = new BigInteger(messageHashed);
+		
+
+		bi = bi.modPow(prvk.getD(), prvk.getN());
+		
+		byte[] array = bi.toByteArray();
+		if (array[0] == 0) {
+			System.out.println("REMOVE ZERO");
+		    byte[] tmp = new byte[array.length - 1];
+		    System.arraycopy(array, 1, tmp, 0, tmp.length);
+		    array = tmp;
+		}
+		
+		System.out.println("signed: " + Arrays.toString(array));
+		System.out.println("signed length: " + array.length);
+		
+		return array;
+	
 	}
 
 	@Override
 	public Boolean verify(byte[] message, byte[] signature) {
+		
+		System.out.println("-------entered verify-------");
+		
 
-		byte[] encSig = encrypt(signature, false);
+		
+		byte[] array = Arrays.copyOf(signature, signature.length);
+		if (array[0] < 0) {
+		    byte[] tmp = new byte[array.length+ 1];
+		    System.out.println("ADD ZERO");
+		    System.arraycopy(array, 0, tmp, 1, array.length);
+		    array = tmp;
+		}
+		BigInteger bi = new BigInteger(array);
+		
+		
+		byte[] encSig = bi.modPow(pubk.getE(), pubk.getN()).toByteArray();
+		
+		
+		
+		
 		byte[] hashMes = hash(message);
 
 		System.out.println("message: " + Arrays.toString(message));
 		System.out.println("signature: " + Arrays.toString(signature));
 		System.out.println("encSig: " + Arrays.toString(encSig));
 		System.out.println("hashmes: " + Arrays.toString(hashMes));
+		System.out.println("encSig length: " + encSig.length);
 
-		boolean allTrue = true;
+		
 
-		if (encSig.length == hashMes.length) {
-			for (int i = 0; i < encSig.length; i++) {
-				if (encSig[i] != message[i]) {
-					allTrue = false;
-				}
-			}
-
-			if (allTrue == true) {
-				return true;
-			} else {
-				return false;
-			}
-		}
-
-		return false;
+		
+		return compareByteArray(encSig, hashMes);
+		
 	}
 
 	private byte[] hash(byte[] data) {
@@ -404,6 +432,26 @@ public class RSAImpl implements RSA {
 		md.update(data);
 
 		return md.digest();
+	}
+	
+	private boolean compareByteArray(byte[] arr1, byte[] arr2) {
+		boolean allTrue = true;
+		
+		if (arr1.length == arr2.length) {
+			for (int i = 0; i < arr1.length; i++) {
+				if (arr1[i] != arr2[i]) {
+					allTrue = false;
+				}
+			}
+
+			if (allTrue == true) {
+				return true;
+			} else {
+				return false;
+			}
+		}
+		return false;
+
 	}
 
 }
